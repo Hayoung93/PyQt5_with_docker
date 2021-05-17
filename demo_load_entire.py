@@ -149,7 +149,15 @@ class UI(QtWidgets.QMainWindow):
 	
 	def process_frames_temp(self):
 		values = [0.8 for _ in range(len(self.frames))]
-		print(values)
+		# print(values)
+		ax = self.fig.add_subplot(111)
+		ax.plot(values)
+		ax.set_xlabel("frame")
+		ax.set_ylabel("confidence")
+		ax.set_title("TEMP graph")
+		ax.set_ylim([0., 1.])
+		ax.legend()
+		self.canvas.draw()
 
 
 if __name__ == "__main__":

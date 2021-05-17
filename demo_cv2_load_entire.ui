@@ -79,13 +79,13 @@
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>430</y>
-      <width>331</width>
-      <height>91</height>
+      <x>40</x>
+      <y>410</y>
+      <width>351</width>
+      <height>141</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout"/>
+    <layout class="QVBoxLayout" name="graph_layout"/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
