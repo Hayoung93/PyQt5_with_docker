@@ -47,15 +47,16 @@ class UI(QtWidgets.QMainWindow):
 		self.timer_resize.timeout.connect(self.audio_sink)
 
 		self.fig = plt.Figure()
-		# self.canvas = FigureCanvas(self.fig)
-		self.canvas = Canvas(self.fig)
-		self.canvas.setMouseTracking(True)
+		self.canvas = FigureCanvas(self.fig)
+		
 
 ############################
 		# self.widget = widget(parent=self.centralwidget)
 		# self.widget.resize(400, 170)
 		# self.graph_layout = QtWidgets.QVBoxLayout(parent=self.widget)
 		# self.graph_layout = qvboxlayout()
+		# self.canvas = Canvas(self.fig)
+		# self.canvas.setMouseTracking(True)
 #########################
 		
 		self.graph_layout.addWidget(self.canvas)
@@ -100,7 +101,7 @@ class UI(QtWidgets.QMainWindow):
 		self.isresized = True
 		self.timer_resize.start(100)
 
-		print("Resized")
+		# print("Resized")
 		QtWidgets.QMainWindow.resizeEvent(self, event)
 		self.resize_widget(self.label, 'both', self.ratio_label)
 		self.resize_widget(self.slider_cv2, 'width', self.ratio_slider_cv2)
@@ -224,7 +225,8 @@ class UI(QtWidgets.QMainWindow):
 		values = values * 0.1 + 0.7
 		self.ax = self.fig.add_subplot(111)
 		self.ax.clear()
-		self.ax.plot(values, marker="o", markevery=[0], markerfacecolor='red')		
+		self.ax.plot(values, marker="o", markevery=[0], markerfacecolor='red')
+		self.ax.plot(values, lw=0.0, marker="o", markevery=[0], mec='red', mew=0.1, mfc=(1, 1, 0, 0.5))
 		self.ax.set_xlabel("frame")
 		self.ax.set_ylabel("confidence")
 		self.ax.set_title("TEMP graph")
@@ -232,9 +234,14 @@ class UI(QtWidgets.QMainWindow):
 		# ax.legend()
 		self.fig.tight_layout()
 		self.canvas.draw()
+		# self.canvas.isgraph = True
+		self.fig.canvas.mpl_connect('motion_notify_event', self.plt_move_event)
+		self.fig.canvas.mpl_connect('button_press_event', self.plt_bpress_event)
 	
 	def set_point_on_graph(self):
-		self.ax.lines[0].set_markevery([self.slider_cv2.value()])
+		slider_pos = self.slider_cv2.value()
+		self.ax.lines[0].set_markevery([slider_pos])
+		# self.canvas.slider_pos = self.slider_cv2.value()
 		self.canvas.draw()
 	
 	def slider_released(self):
@@ -264,6 +271,40 @@ class UI(QtWidgets.QMainWindow):
 				widget.resize(int(self.size().width() * ratio[0]), int(self.size().height() * ratio[1]))
 			except AttributeError:
 				widget.setGeometry(QtCore.QRect(widget.geometry().left(), widget.geometry().top(), int(self.geometry().width() * ratio[0]), int(self.geometry().height() * ratio[1])))
+	
+	def plt_move_event(self, e):
+		# xs, _ = self.ax.transData.transform_point([0, 0])
+		# xe, _ = self.ax.transData.transform_point([len(self.frames), 0])
+		if e.xdata is not None:
+			if e.xdata > 0 and e.xdata < len(self.frames) - 1:
+				# x = trans_x_to_ax(e.x, int(xs), int(xe), len(self.frames) - 1)
+				self.ax.lines[1].set_markevery([round(e.xdata)])
+				self.canvas.draw()
+			elif e.xdata < 0:
+				self.ax.lines[1].set_markevery([0])
+				self.canvas.draw()
+			else:
+				self.ax.lines[1].set_markevery([len(self.frames) - 1])
+				self.canvas.draw()
+		# print("E:", e.xdata)
+	
+	def plt_bpress_event(self, e):
+		# print("B:", e.x, e.xdata)
+		if e.xdata is not None:
+			if e.xdata > 0 and e.xdata < len(self.frames):
+				self.slider_cv2.setValue(round(e.xdata))
+				# print(round(e.xdata))
+			elif e.xdata < 0:
+				self.slider_cv2.setValue(0)
+			else:
+				self.slider_cv2.setValue(len(self.frames) - 1)
+				self.isplaying = False
+				self.timer.stop()
+			# if self.player.state() == 0:
+			# 	self.player.play()
+			self.set_video_position()
+
+
 
 
 # class widget(QtWidgets.QWidget):
@@ -276,13 +317,25 @@ class UI(QtWidgets.QMainWindow):
 	
 	# def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
 	# 	return super().mousePressEvent(a0)
-class Canvas(FigureCanvas):
-	def __init__(self, figure):
-		super(Canvas, self).__init__(figure=figure)
+
+
+# class Canvas(FigureCanvas):
+# 	def __init__(self, figure):
+# 		super(Canvas, self).__init__(figure=figure)
+# 		self.isgraph = False
+# 		self.slider_pos = None
 	
-	def mouseMoveEvent(self, event):
-		# return super().mouseMoveEvent(event)
-		print(event.x(), event.y())
+# 	def mouseMoveEvent(self, event):
+# 		# return super().mouseMoveEvent(event)
+# 		# print(event.x(), event.y())
+# 		if self.isgraph:
+# 			x = event.x()
+# 			self.figure.axes[0].lines[0].set_markevery([self.slider_pos, x])
+# 			self.draw()
+
+def trans_x_to_ax(x, start, end, _len):
+	ratio = _len / (end - start)
+	return (x - start) * ratio
 
 
 if __name__ == "__main__":
